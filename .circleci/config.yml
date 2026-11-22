@@ -1,15 +1,33 @@
-# .circleci/config.yml — задание 1: установка зависимостей и запуск тестов
+# .circleci/config.yml — задание 2: тесты и проверка стиля параллельно, кэш pip
 version: 2.1
 
-jobs:
-  test:
+executors:
+  python:
     docker:
       - image: cimg/python:3.11
+
+commands:
+  install-deps:
+    description: "Установка зависимостей с кэшированием pip"
     steps:
-      - checkout
+      - restore_cache:
+          keys:
+            - pip-v1-{{ checksum "requirements.txt" }}
+            - pip-v1-
       - run:
           name: Install dependencies
           command: pip install -r requirements.txt
+      - save_cache:
+          key: pip-v1-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+
+jobs:
+  test:
+    executor: python
+    steps:
+      - checkout
+      - install-deps
       - run:
           name: Run tests
           command: |
@@ -17,8 +35,20 @@ jobs:
             pytest -v --junitxml=test-results/junit.xml
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: test-results
+
+  lint:
+    executor: python
+    steps:
+      - checkout
+      - install-deps
+      - run:
+          name: Check formatting (black)
+          command: black --check --diff .
 
 workflows:
   build-and-test:
-    jobs:
+    jobs:          # без requires — test и lint выполняются параллельно
       - test
+      - lint
