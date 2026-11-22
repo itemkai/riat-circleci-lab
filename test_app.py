@@ -34,7 +34,9 @@ def test_average():
         average([])
 
 
-@pytest.mark.parametrize("expr, expected", [("2 + 3", 5), ("10 / 4", 2.5), ("3 * 3", 9), ("8 - 10", -2)])
+@pytest.mark.parametrize(
+    "expr, expected", [("2 + 3", 5), ("10 / 4", 2.5), ("3 * 3", 9), ("8 - 10", -2)]
+)
 def test_calculate(expr, expected):
     assert calculate(expr) == expected
 
